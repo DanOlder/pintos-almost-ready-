@@ -24,7 +24,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
 ///////////////////////////////////////////////////////////////////////////
 
-extern int exit_status; 
+extern int exit_status_old; 
 struct semaphore sema1; 
 
 
@@ -150,7 +150,7 @@ int
 process_wait (tid_t child_tid UNUSED) 
 {
 	sema_down(&sema1);
-	return exit_status;   
+	return exit_status_old;   
 }
 
 /* Free the current process's resources. */
@@ -159,7 +159,7 @@ process_exit (void)
 {
 	 
   struct thread *cur = thread_current ();
-  printf("%s: exit(%d)\n",cur->name,exit_status);
+  //printf("%s: exit(%d)\n",cur->name,exit_status);
   uint32_t *pd;
 
   /* Destroy the current process's page directory and switch back
