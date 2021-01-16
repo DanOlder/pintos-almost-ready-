@@ -7,6 +7,7 @@
 #include "threads/thread.h"
 #include "devices/shutdown.h"
 #include "filesys/file.h"
+#include "devices/input.h"
 
 
 
@@ -50,6 +51,11 @@ void check_pntr(const void *ptr){
 void check_page(const void *ptr){
 	check_pntr(ptr);
 	if(!pagedir_get_page(thread_current()->pagedir, ptr)) end_of_proc(-1);
+}
+
+void check_buf(void* argbuf, unsigned size){
+	void* buf = argbuf;
+	for(unsigned i = 0; i<size; i++, buf++) check_pntr(buf);
 }
 
  void args_deref(int *args, int n, struct intr_frame *f){
@@ -186,10 +192,36 @@ syscall_handler (struct intr_frame *f)
 			//lock_release
 			break;
 		};
-		case SYS_READ: ;
+		case SYS_READ:{
 
+			args_deref(args, 3, f);
+			check_page((const void*)args[1]);
+			check_buf((void *) args[1], (unsigned) args[2]);
+			
+			if(args[0] == 0){
+				unsigned* buf = (unsigned*) args[1];//hz
+				for(unsigned i=0; i<args[2]; i++) buf[i] = input_getc();
+				f->eax = args[2];
+				return;
+			}
 
+			//lock_acquire
+			struct list_elem *head;
+			struct list_elem *tail = list_end(&thread_current()->files);
+			struct opened_files *tmp;
+			int i=0;
+			for(head=list_begin(&thread_current()->files); head!=tail; head = list_next(head)){
+				if(list_entry(head, struct opened_files, elem)->fnum==args[0]){i=1; break;}
+			}
+			if(i){
+				tmp = list_entry(head, struct opened_files, elem);
+				if (tmp == 0) i--;
+			}
+
+			if(i) f->eax = file_read(tmp->opfile, args[1], args[2]);
+			else f->eax = -1;
+			//lock_release
+			break;
+		};
 	}
-
-
 }
