@@ -6,12 +6,22 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "devices/shutdown.h"
+#include "filesys/file.h"
 
 
 
 static void syscall_handler (struct intr_frame *);
 
 int exit_status_old;
+
+struct opened_files{
+	int fnum;
+	struct file *opfile;
+	struct list_elem elem;
+};
+
+
+
 
 void
 syscall_init (void) 
@@ -51,6 +61,21 @@ void check_page(const void *ptr){
  		args[n-1] = *temp;
  		n--;
  	}
+ }
+
+ int open_file(const char *name){
+ 	//lock_acquire
+ 	struct file *fop = filesys_open(name);//hz
+ 	if(fop == 0){
+ 		//lock_release
+ 		return -1;
+ 	};
+ 	struct opened_files *of = malloc(sizeof(struct opened_files));
+ 	of->opfile = fop;
+ 	of->fnum = thread_current()->fnum++;
+ 	list_push_back(&thread_current()->files, &of->elem);
+ 	//lock_release
+ 	return of->fnum;
  }
 
 
@@ -93,14 +118,29 @@ syscall_handler (struct intr_frame *f)
 		case SYS_CREATE:{
 			args_deref(args, 2, f);
 			check_page((const void*)args[0]);
-			args[0] = pagedir_get_page(thread_current()->pagedir, args[0]);
 			//lock_acquire
 			f->eax = filesys_create((const char *)args[0], (unsigned) args[1]);
 			//lock_release
 			break;
 		};
-		case SYS_REMOVE:; 
-		case SYS_OPEN: ;
+
+		case SYS_REMOVE:{
+			args_deref(args, 1, f);
+			check_page((const void*)args[0]);
+			//lock_acquire
+			f->eax = filesys_remove((const char *)args[0], (unsigned) args[1]);
+			//lock_release
+			break;
+		}; 
+		case SYS_OPEN:{
+			args_deref(args, 1, f);
+			check_page((const void*)args[0]);
+			//lock_acquire
+			f->eax = open_file((const char *)args[0]);
+			//lock_release
+			break;
+
+		};
 		case SYS_CLOSE: ;
 		case SYS_FILESIZE: ;
 		case SYS_READ: ;

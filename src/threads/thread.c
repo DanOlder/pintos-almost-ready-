@@ -470,6 +470,14 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
+
+
+  /////////////////////////////////////////
+  t->fnum=2;  //2-min znachenie
+  list_init(&t->files);
+
+
+  /////////////////////////////////////////
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and

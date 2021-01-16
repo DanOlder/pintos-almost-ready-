@@ -100,6 +100,16 @@ struct thread
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
+
+    ////////////////////////////////////////////////////////////////
+    int fnum;
+    struct list files;
+
+
+
+
+
+    ////////////////////////////////////////////////////////////////
   };
 
 /* If false (default), use round-robin scheduler.
