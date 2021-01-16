@@ -148,7 +148,6 @@ syscall_handler (struct intr_frame *f)
 			//lock_acquire
 
 			if(args[0]<=1) end_of_proc(-1);
-			//if(args[0]>=thread_current()->fnum) exit(-1);
 			struct list_elem *head;
 			struct list_elem *tail = list_end(&thread_current()->files);
 			struct opened_files *tmp;
@@ -167,12 +166,28 @@ syscall_handler (struct intr_frame *f)
 			//lock_release
 			break;
 		};
-		case SYS_FILESIZE: ;
+
+		case SYS_FILESIZE:{
+			args_deref(args, 1, f);
+			//lock_acquire
+			struct list_elem *head;
+			struct list_elem *tail = list_end(&thread_current()->files);
+			struct opened_files *tmp;
+			int i=0;
+			for(head=list_begin(&thread_current()->files); head!=tail; head = list_next(head)){
+				if(list_entry(head, struct opened_files, elem)->fnum==args[0]){i=1; break;}
+			}
+			if(i){
+				tmp = list_entry(head, struct opened_files, elem);
+				if (tmp == 0) i--;
+			}
+			if(i) f->eax = file_length(tmp->opfile);
+			else f->eax = -1;
+			//lock_release
+			break;
+		};
 		case SYS_READ: ;
 
-
-
-		
 
 	}
 
