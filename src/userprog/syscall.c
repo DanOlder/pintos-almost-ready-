@@ -39,7 +39,7 @@ void check_pntr(const void *ptr){
 
 void check_page(const void *ptr){
 	check_pntr(ptr);
-	if(!pagedir_get_page(thread_current()->pagedir, ptr)) exit(-1);
+	if(!pagedir_get_page(thread_current()->pagedir, ptr)) end_of_proc(-1);
 }
 
  void args_deref(int *args, int n, struct intr_frame *f){
@@ -81,15 +81,24 @@ syscall_handler (struct intr_frame *f)
 			end_of_proc(args[0]);
 		}
 
-		case SYS_EXEC:{
+		/*case SYS_EXEC:{		
 			args_deref(args, 1, f);
 			check_page((const void*)args[0]);
 			
-		}
+		}*/
 
 
-		case SYS_WAIT:;
-		case SYS_CREATE:;
+		//case SYS_WAIT:;
+
+		case SYS_CREATE:{
+			args_deref(args, 2, f);
+			check_page((const void*)args[0]);
+			args[0] = pagedir_get_page(thread_current()->pagedir, args[0]);
+			//lock_acquire
+			f->eax = filesys_create((const char *)args[0], (unsigned) args[1]);
+			//lock_release
+			break;
+		};
 		case SYS_REMOVE:; 
 		case SYS_OPEN: ;
 		case SYS_CLOSE: ;
