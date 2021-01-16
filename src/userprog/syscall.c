@@ -70,10 +70,11 @@ void check_page(const void *ptr){
  		//lock_release
  		return -1;
  	};
+ 	struct thread *c = thread_current();
  	struct opened_files *of = malloc(sizeof(struct opened_files));
  	of->opfile = fop;
- 	of->fnum = thread_current()->fnum++;
- 	list_push_back(&thread_current()->files, &of->elem);
+ 	of->fnum = c->fnum++;
+ 	list_push_back(&c->files, &of->elem);
  	//lock_release
  	return of->fnum;
  }
@@ -141,7 +142,31 @@ syscall_handler (struct intr_frame *f)
 			break;
 
 		};
-		case SYS_CLOSE: ;
+
+		case SYS_CLOSE:{
+			args_deref(args, 1, f);
+			//lock_acquire
+
+			if(args[0]<=1) end_of_proc(-1);
+			//if(args[0]>=thread_current()->fnum) exit(-1);
+			struct list_elem *head;
+			struct list_elem *tail = list_end(&thread_current()->files);
+			struct opened_files *tmp;
+			int i=0;
+			for(head=list_begin(&thread_current()->files); head!=tail; head = list_next(head)){
+				if(list_entry(head, struct opened_files, elem)->fnum==args[0]){i=1; break;}
+			}
+			if(i){
+				tmp = list_entry(head, struct opened_files, elem);
+			}
+			else return end_of_proc(-1); 
+			file_close(tmp->opfile);
+			list_remove(&tmp->elem);
+			free(tmp);
+
+			//lock_release
+			break;
+		};
 		case SYS_FILESIZE: ;
 		case SYS_READ: ;
 
