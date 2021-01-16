@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <syscall-nr.h>
 #include "threads/vaddr.h"
+#include "userprog/pagedir.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "devices/shutdown.h"
@@ -36,7 +37,21 @@ void check_pntr(const void *ptr){
 
 }
 
+void check_page(const void *ptr){
+	check_pntr(ptr);
+	if(!pagedir_get_page(thread_current()->pagedir, ptr)) exit(-1);
+}
 
+ void args_deref(int *args, int n, struct intr_frame *f){
+
+ 	int *temp;
+ 	while(n){
+ 		temp = (int *)f->esp + n;
+ 		check_pntr((const void *)temp);
+ 		args[n-1] = *temp;
+ 		n--;
+ 	}
+ }
 
 
 
@@ -62,15 +77,15 @@ syscall_handler (struct intr_frame *f)
 		}
 
 		case SYS_EXIT: {
-			int *temp;
-			temp = (int *)f->esp + 1;
-			check_pntr((const void *)temp);
-			args[0] = *temp;
+			args_deref(args, 1, f);
 			end_of_proc(args[0]);
+		}
 
 		case SYS_EXEC:{
+			args_deref(args, 1, f);
+			check_page((const void*)args[0]);
 			
-		};
+		}
 
 
 		case SYS_WAIT:;
@@ -83,7 +98,7 @@ syscall_handler (struct intr_frame *f)
 
 
 
-		};
+		
 
 	}
 
