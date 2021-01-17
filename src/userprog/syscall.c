@@ -98,11 +98,6 @@ syscall_handler (struct intr_frame *f)
 
 	switch(stat){
 
-		case SYS_WRITE: {
-			putbuf( ((const char**) f->esp)[2], ((size_t*) f->esp)[3]); 
-			break;
-		}
-
 		case SYS_HALT: {
 			shutdown_power_off(); 
 			break;
@@ -223,5 +218,37 @@ syscall_handler (struct intr_frame *f)
 			//lock_release
 			break;
 		};
+
+		case SYS_WRITE: {
+			args_deref(args, 3, f);
+			check_page((const void*)args[1]);
+			check_buf((void *) args[1], (unsigned) args[2]);
+
+			if(args[0] == 1){
+				putbuf( args[1], args[2]);
+				f->eax = args[2];
+				return;
+			}
+
+			//lock_acquire
+
+			struct list_elem *head;
+			struct list_elem *tail = list_end(&thread_current()->files);
+			struct opened_files *tmp;
+			int i=0;
+			for(head=list_begin(&thread_current()->files); head!=tail; head = list_next(head)){
+				if(list_entry(head, struct opened_files, elem)->fnum==args[0]){i=1; break;}
+			}
+			if(i){
+				tmp = list_entry(head, struct opened_files, elem);
+				if (tmp == 0) i--;
+			}
+
+			if(i) f->eax = file_write(tmp->opfile, args[1], args[2]);
+			else f->eax = -1;
+
+			//lock_realise
+			break;
+		}
 	}
 }
