@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -102,12 +103,19 @@ struct thread
     unsigned magic;                     /* Detects stack overflow. */
 
     ////////////////////////////////////////////////////////////////
+    
+    //file_system
     int fnum;
     struct list files;
 
 
+    //child_system
+    int child_status;
+    bool ch;
+    bool par;
 
-
+    //synch_system
+    struct semaphore thsema;
 
     ////////////////////////////////////////////////////////////////
   };

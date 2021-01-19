@@ -18,14 +18,24 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "threads/synch.h"
+#include "userprog/syscall.h"
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
-///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////ism
+int bip=0;
 
-extern int exit_status_old; 
-struct semaphore sema1; 
+struct childs *h= NULL;
+
+struct childs *point_sp(){
+  return h;
+}
+
+void point_new(struct childs *new){
+  h = new;
+}
+///////////////////////////////////////////////////////////////////////////
 
 
 void prs_n_stk (void** esp, char* file_name){
@@ -71,38 +81,54 @@ default: break;
 
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-/* Starts a new thread running a user program loaded from
-   FILENAME.  The new thread may be scheduled (and may even exit)
-   before process_execute() returns.  Returns the new process's
-   thread id, or TID_ERROR if the thread cannot be created. */
 tid_t
 process_execute (const char *file_name) 
 {
   char *fn_copy;
   tid_t tid;
-  sema_init(&sema1,0);  
 
-  /* Make a copy of FILE_NAME.
-     Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     return TID_ERROR;
+
+
   strlcpy (fn_copy, file_name, PGSIZE);
-
-  /* Create a new thread to execute FILE_NAME. */
-  //printf(">>%s<<   ",file_name);     //////////////////////////////////////////////////////
-
   char* save_ptr;
   char* main_fn = (char*)malloc((strlen(fn_copy)+1));
   strlcpy(main_fn, fn_copy, strlen(fn_copy)+1);
   main_fn = strtok_r(main_fn, " ", &save_ptr);
 
-  //printf(">>%s<<   ",main_fn);/////////////////////////////////////////////////////
+
+
+
 
   tid = thread_create (main_fn, PRI_DEFAULT, start_process, fn_copy);
-  if (tid == TID_ERROR)
+  if (tid == TID_ERROR){
     palloc_free_page (fn_copy); 
+    return -1;
+  }
+////////////////////////////////////////////////////////////////////////////////////////ism
+  //proverka load
+
+
+  struct childs *temp = h;
+  if(h!=NULL){            
+    while(temp!=NULL){
+      temp = temp->next;
+    }
+  }
+
+  temp = (struct childs*)malloc(sizeof(struct childs));
+  temp->child_id = tid;
+  temp->parent_id = thread_tid();
+  temp->parent =thread_current();
+  temp->next = NULL;
+
+  if(h==NULL) h=temp;
+
+  bip=1;
+  //thread_current()->ch=1;
+////////////////////////////////////////////////////////////////////////////////////////
   return tid;
 }
 
@@ -111,6 +137,17 @@ process_execute (const char *file_name)
 static void
 start_process (void *file_name_)
 {
+  ///////////////////////////////////////////////////////////////////ism
+ 
+  struct childs *temp = h;  
+  while(!bip);        
+  while((temp->child_id)!=thread_tid()){
+    temp = temp->next;
+  }
+
+  temp->child = thread_current();
+  //thread_current()->par = 1;
+  ///////////////////////////////////////////////////////////////////
   char *file_name = file_name_;
   struct intr_frame if_;
   bool success;
@@ -147,17 +184,17 @@ start_process (void *file_name_)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid UNUSED) 
+process_wait (tid_t child_tid) 
 {
-	sema_down(&sema1);
-	return exit_status_old;   
+  //ism
+  sema_down(&(thread_current()->thsema));
+	return thread_current()->child_status;
 }
 
 /* Free the current process's resources. */
 void
 process_exit (void)
 {
-	 
   struct thread *cur = thread_current ();
   //printf("%s: exit(%d)\n",cur->name,exit_status);
   uint32_t *pd;
@@ -179,8 +216,6 @@ process_exit (void)
       pagedir_destroy (pd);
 
     }
-
-   sema_up(&sema1);
 }
 
 /* Sets up the CPU for running user code in the current

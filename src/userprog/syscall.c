@@ -9,8 +9,6 @@
 #include "filesys/file.h"
 #include "devices/input.h"
 
-
-
 static void syscall_handler (struct intr_frame *);
 
 int exit_status_old;
@@ -31,13 +29,43 @@ syscall_init (void)
 }
 
 void end_of_proc(int exit_status){
-	//
-
-	exit_status_old = exit_status;//temp
 
 	struct thread *cur = thread_current();
 	printf("%s: exit(%d)\n", cur->name, exit_status);
+    
+
+    /////////////////////////////////////////////////////////////ism
+
+    struct childs *temp = point_sp();            
+  	while(temp->child_id!=thread_tid()){
+    	temp = temp->next;
+  	}
+  	struct childs *del =temp;
+  	struct thread* parent = temp->parent;
+  	parent->child_status = exit_status;
+  	
+
+  	temp = point_sp();
+
+  	if(temp!=del){
+	  	while(temp->next!=del){
+	    	temp = temp->next;
+	  	}
+	  	temp->next = del->next;
+  	}
+  	else{
+  		point_new(del->next);
+  	}
+  	free(del);
+/*
+  	thread_current()->par = 0;
+  	parent->ch = 0;
+
+    /////////////////////////////////////////////////////////////*/
+  	sema_up(&(parent->thsema));
     thread_exit();
+
+    
 }
 
 void check_pntr(const void *ptr){
@@ -101,21 +129,28 @@ syscall_handler (struct intr_frame *f)
 		case SYS_HALT: {
 			shutdown_power_off(); 
 			break;
-		}
+		};
 
 		case SYS_EXIT: {
 			args_deref(args, 1, f);
 			end_of_proc(args[0]);
-		}
+		};
 
-		/*case SYS_EXEC:{		
+		case SYS_EXEC:{		
 			args_deref(args, 1, f);
 			check_page((const void*)args[0]);
 			
-		}*/
 
+			f->eax = process_execute (args[0]);
+			break;
+			
+		};
 
-		//case SYS_WAIT:;
+		case SYS_WAIT:{
+			args_deref(args, 1, f);
+			f->eax = process_wait(args[0]);
+			break;
+		};
 
 		case SYS_CREATE:{
 			args_deref(args, 2, f);
@@ -249,6 +284,6 @@ syscall_handler (struct intr_frame *f)
 
 			//lock_realise
 			break;
-		}
+		};
 	}
 }
