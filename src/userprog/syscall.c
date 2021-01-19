@@ -35,11 +35,12 @@ void end_of_proc(int exit_status){
     
 
     /////////////////////////////////////////////////////////////ism
-
+	
     struct childs *temp = point_sp();            
   	while(temp->child_id!=thread_tid()){
     	temp = temp->next;
   	}
+
   	struct childs *del =temp;
   	struct thread* parent = temp->parent;
   	parent->child_status = exit_status;

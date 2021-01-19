@@ -24,7 +24,6 @@ static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
 ///////////////////////////////////////////////////////////////////////////ism
-int bip=0;
 
 struct childs *h= NULL;
 
@@ -126,7 +125,6 @@ process_execute (const char *file_name)
 
   if(h==NULL) h=temp;
 
-  bip=1;
   //thread_current()->ch=1;
 ////////////////////////////////////////////////////////////////////////////////////////
   return tid;
@@ -139,14 +137,14 @@ start_process (void *file_name_)
 {
   ///////////////////////////////////////////////////////////////////ism
  
-  struct childs *temp = h;  
+ /* struct childs *temp = h;  
   while(!bip);        
   while((temp->child_id)!=thread_tid()){
     temp = temp->next;
   }
 
   temp->child = thread_current();
-  //thread_current()->par = 1;
+  //thread_current()->par = 1;*/
   ///////////////////////////////////////////////////////////////////
   char *file_name = file_name_;
   struct intr_frame if_;
