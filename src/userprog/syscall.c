@@ -43,10 +43,41 @@ void end_of_proc(int exit_status){
     	temp = temp->next;
   	}
 
-  	struct childs *del =temp;
+  	//struct childs *del =temp;
   	struct thread* parent = temp->parent;
   	parent->child_status = exit_status;
   	
+  	//temp->on_delete = 1;
+
+  	/*temp = point_sp();
+
+  	if(temp!=del){
+	  	while(temp->next!=del){
+	    	temp = temp->next;
+	  	}
+	  	temp->next = del->next;
+  	}
+  	else{
+  		point_new(del->next);
+  	}
+  	free(del);
+	*/
+
+    /////////////////////////////////////////////////////////////
+  	sema_up(&(parent->thsema));
+    thread_exit();
+
+    
+}
+
+void clean_elem_of_spis(int tid){
+
+	struct childs *del = point_sp();
+	struct childs *temp;
+
+	while(del->child_id!=tid){
+   		del = del->next;
+  	}
 
   	temp = point_sp();
 
@@ -60,15 +91,7 @@ void end_of_proc(int exit_status){
   		point_new(del->next);
   	}
   	free(del);
-/*
-  	thread_current()->par = 0;
-  	parent->ch = 0;
 
-    /////////////////////////////////////////////////////////////*/
-  	sema_up(&(parent->thsema));
-    thread_exit();
-
-    
 }
 
 void check_pntr(const void *ptr){
@@ -157,7 +180,27 @@ syscall_handler (struct intr_frame *f)
 
 		case SYS_WAIT:{
 			args_deref(args, 1, f);
+
+			struct childs *temp = point_sp();       
+ 			while(temp!=NULL){
+ 				if (temp->child_id == args[0]){
+ 					if(temp->on_wait==1){
+ 					f->eax = -1;
+					break;
+					}
+					else break;
+ 				}
+   				temp = temp->next;
+  			}
+
+  			if(f->eax == -1) break;
+
+  			temp->on_wait=1;
+
 			f->eax = process_wait(args[0]);
+
+			//clean_elem_of_spis(args[0]);	//попробовать через if(temp->on_delete)
+
 			break;
 		};
 

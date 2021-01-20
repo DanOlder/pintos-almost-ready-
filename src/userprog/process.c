@@ -141,17 +141,6 @@ process_execute (const char *file_name)
 static void
 start_process (void *file_name_)
 {
-  ///////////////////////////////////////////////////////////////////ism
- 
- /* struct childs *temp = h;  
-  while(!bip);        
-  while((temp->child_id)!=thread_tid()){
-    temp = temp->next;
-  }
-
-  temp->child = thread_current();
-  //thread_current()->par = 1;*/
-  ///////////////////////////////////////////////////////////////////
   char *file_name = file_name_;
   struct intr_frame if_;
   bool success;

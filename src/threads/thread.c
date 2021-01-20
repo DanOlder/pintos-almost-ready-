@@ -478,8 +478,7 @@ init_thread (struct thread *t, const char *name, int priority)
 
   t->child_load_status = 7;
   t->child_status = -2;
-  t->ch = 0;
-  t->par = 0;
+  
   sema_init(&(t->thsema), 0);
 
   /////////////////////////////////////////

@@ -112,8 +112,6 @@ struct thread
     //child_system
     int child_load_status;
     int child_status;
-    bool ch;
-    bool par;
 
     //synch_system
     struct semaphore thsema;
