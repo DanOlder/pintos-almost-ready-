@@ -35,7 +35,9 @@ void end_of_proc(int exit_status){
     
 
     /////////////////////////////////////////////////////////////ism
-	
+	//printf("when end: %i\n", thread_tid());
+
+
     struct childs *temp = point_sp();            
   	while(temp->child_id!=thread_tid()){
     	temp = temp->next;

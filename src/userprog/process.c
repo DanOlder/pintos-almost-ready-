@@ -108,22 +108,27 @@ process_execute (const char *file_name)
   }
 ////////////////////////////////////////////////////////////////////////////////////////ism
   //proverka load
+  // printf("name: %s\n", main_fn);
+  //printf("tid = %i\n", tid);
+  // printf("ukaz = %i\n", &(h->next));
 
 
-  struct childs *temp = h;
-  if(h!=NULL){            
-    while(temp!=NULL){
-      temp = temp->next;
+  struct childs *temp, *p;
+
+  if(h!=NULL){
+    p = h;            
+    while(p->next!=NULL){
+      p = p->next;
     }
   }
 
   temp = (struct childs*)malloc(sizeof(struct childs));
   temp->child_id = tid;
-  temp->parent_id = thread_tid();
   temp->parent =thread_current();
   temp->next = NULL;
 
   if(h==NULL) h=temp;
+  else p->next = temp;
 
   //thread_current()->ch=1;
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -156,6 +161,11 @@ start_process (void *file_name_)
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp);
+
+  ///////////////////////////////////////////////////////////////////ism
+  
+
+  ///////////////////////////////////////////////////////////////////
 
   /* If load failed, quit. */
   palloc_free_page (file_name);
