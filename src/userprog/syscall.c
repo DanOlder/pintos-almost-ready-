@@ -143,8 +143,14 @@ syscall_handler (struct intr_frame *f)
 			args_deref(args, 1, f);
 			check_page((const void*)args[0]);
 			
+			int tid = process_execute (args[0]);
 
-			f->eax = process_execute (args[0]);
+		  	if(thread_current()->child_load_status == 1){
+		  		f->eax = tid;
+		  	}
+		  	if(thread_current()->child_load_status == 0) {
+		  		f->eax = -1;
+		  	}
 			break;
 			
 		};

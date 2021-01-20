@@ -130,7 +130,8 @@ process_execute (const char *file_name)
   if(h==NULL) h=temp;
   else p->next = temp;
 
-  //thread_current()->ch=1;
+  sema_down(&(thread_current()->thsema));
+ // printf("in exec: %i\n", temp->load_status);
 ////////////////////////////////////////////////////////////////////////////////////////
   return tid;
 }
@@ -163,8 +164,15 @@ start_process (void *file_name_)
   success = load (file_name, &if_.eip, &if_.esp);
 
   ///////////////////////////////////////////////////////////////////ism
-  
-
+  struct childs *temp = h;       
+  while((temp->child_id)!=thread_tid()){
+    temp = temp->next;
+  }
+  (temp->parent)->child_load_status = success;
+  //printf("in start after load: %i\n", temp->load_status);
+  ///////
+  sema_up(&((temp->parent)->thsema));
+  ///////
   ///////////////////////////////////////////////////////////////////
 
   /* If load failed, quit. */
@@ -172,6 +180,7 @@ start_process (void *file_name_)
   //printf("OTLADKA  %d\n",success);
   if (!success) 
     thread_exit ();
+
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
@@ -331,14 +340,13 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
 
-//////////////////////////////////////////////////////////////////////////////////////
 
   char* save_ptr;
   char* main_fn = (char*)malloc((strlen(file_name)+1));
   strlcpy(main_fn, file_name, strlen(file_name)+1);
   main_fn = strtok_r(main_fn, " ", &save_ptr);
 
-//////////////////////////////////////////////////////////////////////////////////////
+
 
   file = filesys_open (main_fn);
   if (file == NULL) 

@@ -5,10 +5,12 @@ void syscall_init (void);
 
 
 struct childs{
+	int load_status;
 	int child_id;
-	int parent_id;
-	struct thread *child;
-	struct thread *parent;
+	int parent_id;	//del
+	struct thread *child;	//del
+	struct thread *parent;	
+
 
 	struct childs *next;
 

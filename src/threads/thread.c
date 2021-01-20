@@ -476,6 +476,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->fnum=2;  //2-min znachenie
   list_init(&t->files);
 
+  t->child_load_status = 7;
   t->child_status = -2;
   t->ch = 0;
   t->par = 0;
