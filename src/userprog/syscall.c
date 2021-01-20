@@ -145,10 +145,11 @@ void check_buf(void* argbuf, unsigned size){
 static void
 syscall_handler (struct intr_frame *f) 
 {
+	check_pntr((const void*)f->esp);
 	int stat = *(int*)f->esp;
 	int args[3];
 
-	check_pntr((const void*)f->esp);
+	
 
 	switch(stat){
 
@@ -180,6 +181,11 @@ syscall_handler (struct intr_frame *f)
 
 		case SYS_WAIT:{
 			args_deref(args, 1, f);
+
+			if(args[0] > 100000 || args[0] <1){
+				f->eax = -1;
+				break;
+			}
 
 			struct childs *temp = point_sp();       
  			while(temp!=NULL){
